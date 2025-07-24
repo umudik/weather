@@ -37,7 +37,7 @@ export class BatchManagementService {
     ): Promise<T> {
         const batchKey = BATCH_PREFIX + key;
 
-        this.pendingBatches = this.pendingBatches.filter( // Reviewer note: Memory leak on high load. TODO: Fix it.
+        this.pendingBatches = this.pendingBatches.filter( // Dev note: Memory leak on high load. TODO: Fix it.
             (batch) =>
                 (batch.endTime + timeoutMs * CLEAR_BATCH_MULTIPLIER) > now,
         );
