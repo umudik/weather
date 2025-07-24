@@ -1,6 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BatchManagementService } from "../src/domain/services/batch-management.service";
-import { UpdateWeatherRequestCountUseCase } from "../src/application/usecases/update-weather-request-count.usecase";
 
 interface TestResult {
     location: string;
@@ -9,32 +8,16 @@ interface TestResult {
 
 describe("BatchManagementService Critical Tests", () => {
     let service: BatchManagementService;
-    let updateWeatherRequestCountUseCase: jest.Mocked<
-        UpdateWeatherRequestCountUseCase
-    >;
 
     beforeEach(async () => {
         jest.clearAllTimers();
         jest.useFakeTimers();
 
-        const mockUpdateWeatherRequestCountUseCase = {
-            execute: jest.fn().mockResolvedValue(undefined),
-        };
-
         const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                BatchManagementService,
-                {
-                    provide: UpdateWeatherRequestCountUseCase,
-                    useValue: mockUpdateWeatherRequestCountUseCase,
-                },
-            ],
+            providers: [BatchManagementService],
         }).compile();
 
         service = module.get<BatchManagementService>(BatchManagementService);
-        updateWeatherRequestCountUseCase = module.get(
-            UpdateWeatherRequestCountUseCase,
-        );
     });
 
     afterEach(() => {
@@ -87,7 +70,7 @@ describe("BatchManagementService Critical Tests", () => {
             );
 
             const now = Date.now();
-            const timeout = 100; // Shorter timeout for faster test
+            const timeout = 100;
             const maxBatchSize = 10;
 
             const promise1 = service.batchExecute(
@@ -106,7 +89,6 @@ describe("BatchManagementService Critical Tests", () => {
                 mockFactory,
             );
 
-            // Advance timers to trigger timeout
             jest.advanceTimersByTime(timeout);
 
             const results = await Promise.all([
@@ -141,7 +123,7 @@ describe("BatchManagementService Critical Tests", () => {
         );
 
         const now = Date.now();
-        const timeout = 100; // Shorter timeout for faster test
+        const timeout = 100;
         const maxBatchSize = 10;
 
         const promises = Promise.all([
@@ -161,7 +143,6 @@ describe("BatchManagementService Critical Tests", () => {
             ),
         ]);
 
-        // Advance timers to trigger timeout
         jest.advanceTimersByTime(timeout);
 
         const [istanbulRes, londonRes] = await promises as TestResult[];

@@ -8,9 +8,9 @@ Write-Host ""
 $jobs = @()
 $globalStart = Get-Date
 
-$randomDelay = Get-Random -Minimum 700 -Maximum 1300
+$randomDelay = Get-Random -Minimum 120 -Maximum 1300
 
-for ($i = 1; $i -le 20; $i++) {
+for ($i = 1; $i -le 10; $i++) {
     $job = Start-Job -ScriptBlock {
         param($url, $location, $requestId)
         $start = Get-Date

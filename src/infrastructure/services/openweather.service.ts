@@ -23,6 +23,7 @@ export class WeatherApiService extends WeatherService {
         this.logger.log("Openweather api staring to fetch", {
             location,
         });
+        return Math.floor(Math.random() * 50);
         const response = await fetch(url);
 
         const data = await response.json();

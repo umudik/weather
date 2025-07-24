@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { UpdateWeatherRequestCountUseCase } from "../../application/usecases/update-weather-request-count.usecase";
 
 const BATCH_PREFIX = "batch:weather:";
 const CLEAR_BATCH_MULTIPLIER = 5;
@@ -14,15 +13,20 @@ interface BatchGroup {
     resolver: (value: any) => void;
 }
 
+export interface BatchCompletedEvent {
+    logId?: string;
+    requestCount: number;
+}
+
 @Injectable()
 export class BatchManagementService {
     private pendingBatches: BatchGroup[] = [];
     private readonly logger = new Logger(BatchManagementService.name);
+    private batchCompletedCallback?: (event: BatchCompletedEvent) => void;
 
-    constructor(
-        private readonly updateWeatherRequestCountUseCase:
-            UpdateWeatherRequestCountUseCase,
-    ) {}
+    setBatchCompletedCallback(callback: (event: BatchCompletedEvent) => void) {
+        this.batchCompletedCallback = callback;
+    }
 
     async batchExecute<T>(
         key: string,
@@ -56,17 +60,10 @@ export class BatchManagementService {
 
                 const factoryResponse = await closestBatch.factoryPromise;
 
-                if (this.hasLogId(factoryResponse)) {
-                    this.updateWeatherRequestCountUseCase.execute({
-                        logId: factoryResponse.logId,
-                        requestCount: closestBatch.requestCount,
-                    }).catch((error) => {
-                        this.logger.error(
-                            "Failed to update request count:",
-                            error,
-                        );
-                    });
-                }
+                this.notifyBatchCompleted(
+                    factoryResponse,
+                    closestBatch.requestCount,
+                );
 
                 closestBatch.resolver(factoryResponse);
 
@@ -92,13 +89,11 @@ export class BatchManagementService {
                 b.batchKey === batchKey
             );
 
-            if (this.hasLogId(factoryResponse) && currentBatch) {
-                this.updateWeatherRequestCountUseCase.execute({
-                    logId: factoryResponse.logId,
-                    requestCount: currentBatch.requestCount,
-                }).catch((error) => {
-                    console.error("Failed to update request count:", error);
-                });
+            if (currentBatch) {
+                this.notifyBatchCompleted(
+                    factoryResponse,
+                    currentBatch.requestCount,
+                );
             }
 
             resolvePromise(factoryResponse);
@@ -121,6 +116,15 @@ export class BatchManagementService {
         });
 
         return promise;
+    }
+
+    private notifyBatchCompleted(response: any, requestCount: number) {
+        if (this.batchCompletedCallback && this.hasLogId(response)) {
+            this.batchCompletedCallback({
+                logId: response.logId,
+                requestCount,
+            });
+        }
     }
 
     hasLogId(response: any): response is { logId: string } {

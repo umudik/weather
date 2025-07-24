@@ -1,17 +1,33 @@
-import { Controller, Get, Query, Req } from "@nestjs/common";
+import { Controller, Get, Logger, Query } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { WeatherResponseDto } from "../dtos/weather-response.dto";
 import { WeatherRequestDto } from "../dtos/weather-request.dto";
 import { GetWeatherUseCase } from "../../application/usecases/get-weather.usecase";
 import { BatchManagementService } from "../../domain/services/batch-management.service";
+import { UpdateWeatherRequestCountUseCase } from "../../application/usecases/update-weather-request-count.usecase";
 
 @ApiTags("weather")
 @Controller()
 export class WeatherController {
+    private readonly logger = new Logger(WeatherController.name);
     constructor(
         private readonly getWeatherUseCase: GetWeatherUseCase,
         private readonly batchManagementService: BatchManagementService,
+        private readonly updateWeatherRequestCountUseCase:
+            UpdateWeatherRequestCountUseCase,
     ) {
+        this.batchManagementService.setBatchCompletedCallback(async (event) => {
+            try {
+                await this.updateWeatherRequestCountUseCase.execute({
+                    logId: event.logId!,
+                    requestCount: event.requestCount,
+                });
+            } catch (error) {
+                this.logger.error(
+                    `Failed to update request count: ${error.message}`,
+                );
+            }
+        });
     }
 
     @Get("weather")

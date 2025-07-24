@@ -1,37 +1,24 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BatchManagementService } from "../src/domain/services/batch-management.service";
-import { UpdateWeatherRequestCountUseCase } from "../src/application/usecases/update-weather-request-count.usecase";
 
 describe("BatchManagementService", () => {
     let batchService: BatchManagementService;
-    let updateWeatherRequestCountUseCase: jest.Mocked<
-        UpdateWeatherRequestCountUseCase
-    >;
+    let batchCompletedCallback: jest.Mock;
 
     beforeEach(async () => {
         jest.clearAllTimers();
         jest.useFakeTimers();
 
-        const mockUpdateWeatherRequestCountUseCase = {
-            execute: jest.fn().mockResolvedValue(undefined),
-        };
-
         const module: TestingModule = await Test.createTestingModule({
-            providers: [
-                BatchManagementService,
-                {
-                    provide: UpdateWeatherRequestCountUseCase,
-                    useValue: mockUpdateWeatherRequestCountUseCase,
-                },
-            ],
+            providers: [BatchManagementService],
         }).compile();
 
         batchService = module.get<BatchManagementService>(
             BatchManagementService,
         );
-        updateWeatherRequestCountUseCase = module.get(
-            UpdateWeatherRequestCountUseCase,
-        );
+
+        batchCompletedCallback = jest.fn();
+        batchService.setBatchCompletedCallback(batchCompletedCallback);
     });
 
     afterEach(() => {
@@ -65,13 +52,10 @@ describe("BatchManagementService", () => {
 
             expect(mockFactory).toHaveBeenCalledTimes(1);
             expect(result.temperature).toBe(25);
-            expect(updateWeatherRequestCountUseCase.execute)
-                .toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        logId: "log-1",
-                        requestCount: 1,
-                    }),
-                );
+            expect(batchCompletedCallback).toHaveBeenCalledWith({
+                logId: "log-1",
+                requestCount: 1,
+            });
         });
 
         it("should batch multiple requests within timeout window", async () => {
@@ -123,12 +107,10 @@ describe("BatchManagementService", () => {
                 expect(result.temperature).toBe(25);
             });
 
-            expect(updateWeatherRequestCountUseCase.execute)
-                .toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        requestCount: 3,
-                    }),
-                );
+            expect(batchCompletedCallback).toHaveBeenCalledWith({
+                logId: "log-1",
+                requestCount: 3,
+            });
         });
     });
 
@@ -210,12 +192,10 @@ describe("BatchManagementService", () => {
 
             expect(mockFactory).toHaveBeenCalledTimes(1);
             expect(results).toHaveLength(2);
-            expect(updateWeatherRequestCountUseCase.execute)
-                .toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        requestCount: 2,
-                    }),
-                );
+            expect(batchCompletedCallback).toHaveBeenCalledWith({
+                logId: "log-1",
+                requestCount: 2,
+            });
         });
 
         it("should create new batch if outside time window", async () => {
@@ -260,8 +240,7 @@ describe("BatchManagementService", () => {
 
             expect(mockFactory).toHaveBeenCalledTimes(2);
             expect(result2.temperature).toBe(30);
-            expect(updateWeatherRequestCountUseCase.execute)
-                .toHaveBeenCalledTimes(2);
+            expect(batchCompletedCallback).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -324,11 +303,10 @@ describe("BatchManagementService", () => {
             jest.advanceTimersByTime(timeout);
             await promise;
 
-            expect(updateWeatherRequestCountUseCase.execute)
-                .toHaveBeenCalledWith({
-                    logId: "test-log-id",
-                    requestCount: 1,
-                });
+            expect(batchCompletedCallback).toHaveBeenCalledWith({
+                logId: "test-log-id",
+                requestCount: 1,
+            });
         });
 
         it("should handle response without logId gracefully", async () => {
@@ -352,8 +330,7 @@ describe("BatchManagementService", () => {
             jest.advanceTimersByTime(timeout);
             await promise;
 
-            expect(updateWeatherRequestCountUseCase.execute).not
-                .toHaveBeenCalled();
+            expect(batchCompletedCallback).not.toHaveBeenCalled();
         });
     });
 });

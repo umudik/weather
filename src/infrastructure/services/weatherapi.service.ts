@@ -23,6 +23,7 @@ export class WeatherstackService extends WeatherService {
         this.logger.log("Weatherstack api staring to fetch", {
             location,
         });
+        return Math.floor(Math.random() * 50);
         const response = await fetch(url);
 
         if (response.status === 400) {

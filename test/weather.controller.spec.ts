@@ -2,6 +2,7 @@ import { WeatherController } from "../src/presentation/controllers/weather.contr
 import { GetWeatherUseCase } from "../src/application/usecases/get-weather.usecase";
 import { WeatherRequestDto } from "../src/presentation/dtos/weather-request.dto";
 import { BatchManagementService } from "../src/domain/services/batch-management.service";
+import { UpdateWeatherRequestCountUseCase } from "../src/application/usecases/update-weather-request-count.usecase";
 import {
     DomainError,
     InfrastructureError,
@@ -13,6 +14,7 @@ describe("WeatherController Critical Tests", () => {
     let controller: WeatherController;
     let mockUseCase: jest.Mocked<GetWeatherUseCase>;
     let mockBatchService: jest.Mocked<BatchManagementService>;
+    let mockUpdateUseCase: jest.Mocked<UpdateWeatherRequestCountUseCase>;
 
     beforeEach(() => {
         mockUseCase = {
@@ -21,9 +23,18 @@ describe("WeatherController Critical Tests", () => {
 
         mockBatchService = {
             batchExecute: jest.fn(),
+            setBatchCompletedCallback: jest.fn(),
         } as any;
 
-        controller = new WeatherController(mockUseCase, mockBatchService);
+        mockUpdateUseCase = {
+            execute: jest.fn(),
+        } as any;
+
+        controller = new WeatherController(
+            mockUseCase,
+            mockBatchService,
+            mockUpdateUseCase,
+        );
     });
 
     it("should process weather request for Istanbul", async () => {
@@ -159,6 +170,12 @@ describe("WeatherController Critical Tests", () => {
             expect.any(Number),
             expect.any(Number),
             expect.any(Number),
+            expect.any(Function),
+        );
+    });
+
+    it("should setup batch completed callback", () => {
+        expect(mockBatchService.setBatchCompletedCallback).toHaveBeenCalledWith(
             expect.any(Function),
         );
     });
