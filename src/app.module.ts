@@ -4,7 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { WeatherModule } from "./modules/weather.module";
 import appConfig from "./config/app.config";
-import { WeatherQuery } from "./domain/entities/weather-query.entity";
+import { typeOrmConfig } from "./infrastructure/config/typeorm.config";
 
 @Module({
   imports: [
@@ -14,10 +14,10 @@ import { WeatherQuery } from "./domain/entities/weather-query.entity";
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
-        type: "postgres",
+        ...typeOrmConfig,
         url: configService.get<string>("databaseUrl"),
-        entities: [WeatherQuery],
         synchronize: configService.get<boolean>("dbSynchronize"),
+        logging: configService.get<boolean>("dbLogging"),
       }),
       inject: [ConfigService],
     }),

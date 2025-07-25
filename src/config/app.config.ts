@@ -4,6 +4,7 @@ export interface AppConfig {
     redisUrl: string;
     port: number;
     dbSynchronize: boolean;
+    dbLogging: boolean;
     databaseUrl: string;
 }
 
@@ -13,5 +14,6 @@ export default (): AppConfig => ({
     redisUrl: process.env.REDIS_URL!,
     port: parseInt(process.env.PORT || "3000", 10),
     dbSynchronize: process.env.DB_SYNCHRONIZE === "true",
+    dbLogging: process.env.NODE_ENV === "development",
     databaseUrl: process.env.DATABASE_URL!,
 });
