@@ -10,9 +10,6 @@ import { WeatherQueryRepository } from "src/infrastructure/repositories/weather-
 import { BatchManagementService } from "../domain/services/batch-management.service";
 import { RedisCacheService } from "../infrastructure/services/redis-cache.service";
 import { CacheService } from "../domain/abstracts/services/cache.service.abstract";
-import { EventBusService } from "../domain/abstracts/services/event-bus.service.abstract";
-import { RedisEventBusService } from "../infrastructure/services/redis-event-bus.service";
-import { WeatherFetchedHandler } from "../application/handlers/weather-fetched.handler";
 import { WeatherQueryRepositoryPort } from "../domain/abstracts/repositories/weather-query.repository.abstract";
 
 @Module({
@@ -26,15 +23,9 @@ import { WeatherQueryRepositoryPort } from "../domain/abstracts/repositories/wea
         WeatherQueryRepository,
         BatchManagementService,
         RedisCacheService,
-        RedisEventBusService,
-        WeatherFetchedHandler,
         {
             provide: CacheService,
             useClass: RedisCacheService,
-        },
-        {
-            provide: EventBusService,
-            useClass: RedisEventBusService,
         },
         {
             provide: WeatherQueryRepositoryPort,
