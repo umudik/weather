@@ -10,7 +10,7 @@ $globalStart = Get-Date
 
 $randomDelay = Get-Random -Minimum 120 -Maximum 1300
 
-for ($i = 1; $i -le 5; $i++) {
+for ($i = 1; $i -le 15; $i++) {
     $job = Start-Job -ScriptBlock {
         param($url, $location, $requestId)
         $start = Get-Date
